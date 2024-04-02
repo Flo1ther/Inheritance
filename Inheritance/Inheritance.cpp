@@ -1,60 +1,152 @@
-﻿#include <iostream>
-#include <string>
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include <iostream>
+#include <cstring>
 
-class Animal {
+class String {
 protected:
-    std::string name;
+    char* str;
+    size_t length;
 
 public:
-    Animal(const std::string& _name) : name(_name) {}
+    String() : str(nullptr), length(0) {}
 
-    virtual void speak() const = 0; // Віртуальна функція для "говоріння" тварини
-};
+    String(const char* s) {
+        length = strlen(s);
+        str = new char[length + 1];
+        strcpy_s(str, length + 1, s);
+    }
 
-class Dog : public Animal {
-private:
-    std::string breed;
+    String(const String& other) {
+        length = other.length;
+        str = new char[length + 1];
+        strcpy_s(str, length + 1, other.str);
+    }
 
-public:
-    Dog(const std::string& _name, const std::string& _breed) : Animal(_name), breed(_breed) {}
+    String& operator=(const String& other) {
+        if (this != &other) {
+            delete[] str;
+            length = other.length;
+            str = new char[length + 1];
+            strcpy(str, other.str);
+        }
+        return *this;
+    }
 
-    void speak() const override {
-        std::cout << "Woof! I'm a " << breed << " dog named " << name << std::endl;
+    size_t getLength() const {
+        return length;
+    }
+
+    void clear() {
+        delete[] str;
+        str = nullptr;
+        length = 0;
+    }
+
+    ~String() {
+        delete[] str;
+    }
+
+    String operator+(const String& other) const {
+        char* newStr = new char[length + other.length + 1];
+        strcpy(newStr, str);
+        strcat(newStr, other.str);
+        return String(newStr);
+    }
+
+    String& operator+=(const String& other) {
+        *this = *this + other;
+        return *this;
+    }
+
+    bool operator==(const String& other) const {
+        return strcmp(str, other.str) == 0;
+    }
+
+    bool operator!=(const String& other) const {
+        return !(*this == other);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const String& s) {
+        os << s.str;
+        return os;
+    }
+
+    const char* getStr() const {
+        return str;
     }
 };
 
-class Cat : public Animal {
-private:
-    std::string color;
-
+class BinaryString : public String {
 public:
-    Cat(const std::string& _name, const std::string& _color) : Animal(_name), color(_color) {}
+    BinaryString() : String() {}
 
-    void speak() const override {
-        std::cout << "Meow! I'm a " << color << " cat named " << name << std::endl;
+    BinaryString(const char* s) : String() {
+        for (size_t i = 0; i < strlen(s); ++i) {
+            if (s[i] != '0' && s[i] != '1') {
+                clear();
+                return;
+            }
+        }
+        str = new char[strlen(s) + 1];
+        strcpy(str, s);
+        length = strlen(s);
     }
-};
 
-class Parrot : public Animal {
-private:
-    std::string species;
+    BinaryString(const BinaryString& other) : String(other) {}
 
-public:
-    Parrot(const std::string& _name, const std::string& _species) : Animal(_name), species(_species) {}
+    BinaryString& operator=(const BinaryString& other) {
+        String::operator=(other);
+        return *this;
+    }
 
-    void speak() const override {
-        std::cout << "Squawk! I'm a " << species << " parrot named " << name << std::endl;
+    void changeSign() {
+        for (size_t i = 0; i < length; ++i) {
+            if (str[i] == '0')
+                str[i] = '1';
+            else
+                str[i] = '0';
+        }
+    }
+
+    BinaryString operator+(const BinaryString& other) const {
+        return BinaryString((String::operator+(other)).getStr());
+    }
+
+    bool operator==(const BinaryString& other) const {
+        return String::operator==(other);
+    }
+
+    bool operator!=(const BinaryString& other) const {
+        return !(*this == other);
     }
 };
 
 int main() {
-    Dog dog("Buddy", "Labrador");
-    Cat cat("Whiskers", "Tabby");
-    Parrot parrot("Polly", "African Grey");
+    String s1("Hello");
+    String s2("World");
 
-    dog.speak();
-    cat.speak();
-    parrot.speak();
+    String s3 = s1 + s2;
+    std::cout << "Concatenated string: " << s3 << std::endl;
+
+    if (s1 == s2) {
+        std::cout << "s1 is equal to s2" << std::endl;
+    }
+    else {
+        std::cout << "s1 is not equal to s2" << std::endl;
+    }
+
+    BinaryString bs1("1010");
+    BinaryString bs2("1100");
+
+    BinaryString bs3 = bs1 + bs2;
+    std::cout << "Concatenated binary string: " << bs3 << std::endl;
+
+    if (bs1 == bs2) {
+        std::cout << "bs1 is equal to bs2" << std::endl;
+    }
+    else {
+        std::cout << "bs1 is not equal to bs2" << std::endl;
+    }
 
     return 0;
 }
